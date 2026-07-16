@@ -1279,6 +1279,7 @@ body.edit-mode .insert-image-zone{display:block; text-align:center; margin:28px 
             <div><label for="uunvan">Unvan / Akademik derece (varsa)</label><input type="text" id="uunvan" placeholder="Örn. Prof. Dr., Dr. Öğr. Üyesi, Doktora Öğrencisi"></div>
             <div><label for="ukurum">Bağlı olduğunuz kurum (varsa)</label><input type="text" id="ukurum" placeholder="Üniversite / kurum adı — akademisyen değilseniz boş bırakabilirsiniz"></div>
             <div><label for="ueposta">E-posta adresi</label><input type="email" id="ueposta" placeholder="ornek@eposta.com" required></div>
+            <div><label for="utelefon">Telefon</label><input type="tel" id="utelefon" placeholder="05XX XXX XX XX" required></div>
             <div><label for="ualan">Çalışma alanınız / ilgi alanınız</label><input type="text" id="ualan" placeholder="Örn. Osmanlı bilim tarihi, tıp tarihi, astronomi tarihi"></div>
             <div><label for="umotivasyon">Kısaca sizi tanıyalım</label><textarea id="umotivasyon" placeholder="Bilim tarihiyle ilgilenme sebebiniz, çalışmalarınız ve derneğe katkı beklentiniz"></textarea></div>
             <button type="submit" class="btn btn-brass" style="align-self:flex-start;">Başvuruyu Gönder</button>
@@ -1722,6 +1723,15 @@ body.edit-mode .insert-image-zone{display:block; text-align:center; margin:28px 
     for(var i=0;i<len;i++){ out += chars[Math.floor(Math.random()*chars.length)]; }
     return out;
   }
+  function notifyAdmin(kind, data){
+    try {
+      fetch('/notify.php', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(Object.assign({kind:kind}, data))
+      }).catch(function(){ /* mail atilamasa bile form kaydi Supabase'de duruyor */ });
+    } catch(e) { /* sessizce gec */ }
+  }
 
   var uyelikForm = document.getElementById('uyelik-form');
   if(uyelikForm){
@@ -1732,19 +1742,20 @@ body.edit-mode .insert-image-zone{display:block; text-align:center; margin:28px 
       var payload = {
         full_name: document.getElementById('uad').value.trim(),
         email: document.getElementById('ueposta').value.trim(),
-        phone: null,
+        phone: document.getElementById('utelefon').value.trim(),
         message: [
           document.getElementById('uunvan').value.trim() ? ('Unvan: ' + document.getElementById('uunvan').value.trim()) : '',
           document.getElementById('ukurum').value.trim() ? ('Kurum: ' + document.getElementById('ukurum').value.trim()) : '',
           document.getElementById('ualan').value.trim() ? ('Çalışma alanı: ' + document.getElementById('ualan').value.trim()) : '',
           document.getElementById('umotivasyon').value.trim()
-        ].filter(Boolean).join('\\n')
+        ].filter(Boolean).join('\n')
       };
-      if(!payload.full_name || !payload.email){ formMsg(msgEl, 'Ad soyad ve e-posta zorunludur.', false); return; }
+      if(!payload.full_name || !payload.email || !payload.phone){ formMsg(msgEl, 'Ad soyad, e-posta ve telefon zorunludur.', false); return; }
       btn.disabled = true;
       var res = await tbtkSupabase.from('tbtk_membership_applications').insert(payload);
       btn.disabled = false;
       if(res.error){ formMsg(msgEl, 'Başvuru gönderilemedi, lütfen tekrar deneyin.', false); return; }
+      notifyAdmin('uyelik', payload);
       formMsg(msgEl, 'Başvurunuz alındı, Yönetim Kurulu değerlendirdikten sonra size dönüş yapılacaktır.', true);
       uyelikForm.reset();
     });
@@ -1768,6 +1779,7 @@ body.edit-mode .insert-image-zone{display:block; text-align:center; margin:28px 
       });
       btn.disabled = false;
       if(res.error){ formMsg(msgEl, 'Bildirim gönderilemedi, lütfen tekrar deneyin.', false); return; }
+      notifyAdmin('bagis', {full_name:fullName, email:email, message:'Tutar: ' + tutar + ' — Referans: ' + refNo});
       formMsg(msgEl, 'Teşekkürler! Referans numaranız: ' + refNo + ' — sorgu kodunuz: ' + accessCode + ' (bu ikisini not edin).', true);
       bagisForm.reset();
     });
@@ -1790,6 +1802,7 @@ body.edit-mode .insert-image-zone{display:block; text-align:center; margin:28px 
       var res = await tbtkSupabase.from('tbtk_contact_messages').insert(payload);
       btn.disabled = false;
       if(res.error){ formMsg(msgEl, 'Mesaj gönderilemedi, lütfen tekrar deneyin.', false); return; }
+      notifyAdmin('iletisim', payload);
       formMsg(msgEl, 'Mesajınız alındı, en kısa sürede dönüş yapılacaktır.', true);
       iletisimForm.reset();
     });
