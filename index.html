@@ -1274,14 +1274,15 @@ body.edit-mode .insert-image-zone{display:block; text-align:center; margin:28px 
       <div>
         <div class="card" style="padding:32px;">
           <h3 class="card-title" style="font-size:19px; margin-bottom:16px;">Başvuru Formu</h3>
-          <form class="contact-form">
-            <div><label for="uad">Ad soyad</label><input type="text" id="uad" placeholder="Ad soyad"></div>
-            <div><label for="uunvan">Unvan / Akademik derece</label><input type="text" id="uunvan" placeholder="Örn. Prof. Dr., Dr. Öğr. Üyesi, Doktora Öğrencisi"></div>
-            <div><label for="ukurum">Bağlı olduğunuz kurum</label><input type="text" id="ukurum" placeholder="Üniversite / kurum adı"></div>
-            <div><label for="ueposta">E-posta adresi</label><input type="email" id="ueposta" placeholder="ornek@eposta.com"></div>
-            <div><label for="ualan">Çalışma alanınız</label><input type="text" id="ualan" placeholder="Örn. Osmanlı bilim tarihi, tıp tarihi, astronomi tarihi"></div>
+          <form class="contact-form" id="uyelik-form">
+            <div><label for="uad">Ad soyad</label><input type="text" id="uad" placeholder="Ad soyad" required></div>
+            <div><label for="uunvan">Unvan / Akademik derece (varsa)</label><input type="text" id="uunvan" placeholder="Örn. Prof. Dr., Dr. Öğr. Üyesi, Doktora Öğrencisi"></div>
+            <div><label for="ukurum">Bağlı olduğunuz kurum (varsa)</label><input type="text" id="ukurum" placeholder="Üniversite / kurum adı — akademisyen değilseniz boş bırakabilirsiniz"></div>
+            <div><label for="ueposta">E-posta adresi</label><input type="email" id="ueposta" placeholder="ornek@eposta.com" required></div>
+            <div><label for="ualan">Çalışma alanınız / ilgi alanınız</label><input type="text" id="ualan" placeholder="Örn. Osmanlı bilim tarihi, tıp tarihi, astronomi tarihi"></div>
             <div><label for="umotivasyon">Kısaca sizi tanıyalım</label><textarea id="umotivasyon" placeholder="Bilim tarihiyle ilgilenme sebebiniz, çalışmalarınız ve derneğe katkı beklentiniz"></textarea></div>
             <button type="submit" class="btn btn-brass" style="align-self:flex-start;">Başvuruyu Gönder</button>
+            <p id="uyelik-form-msg" style="font-size:13.5px; margin:0; display:none;"></p>
           </form>
         </div>
       </div>
@@ -1319,11 +1320,12 @@ body.edit-mode .insert-image-zone{display:block; text-align:center; margin:28px 
       </div>
       <div class="card">
         <h3 class="card-title" style="font-size:17px;">Bağış bildirim formu</h3>
-        <form class="contact-form">
-          <div><label for="bad">Ad soyad</label><input type="text" id="bad" placeholder="Ad soyad"></div>
-          <div><label for="beposta">E-posta adresi</label><input type="email" id="beposta" placeholder="ornek@eposta.com"></div>
+        <form class="contact-form" id="bagis-form">
+          <div><label for="bad">Ad soyad</label><input type="text" id="bad" placeholder="Ad soyad" required></div>
+          <div><label for="beposta">E-posta adresi</label><input type="email" id="beposta" placeholder="ornek@eposta.com" required></div>
           <div><label for="btutar">Bağış tutarı</label><input type="text" id="btutar" placeholder="Örn. 500 TL"></div>
           <button type="submit" class="btn btn-brass" style="align-self:flex-start;">Bildirimi Gönder</button>
+          <p id="bagis-form-msg" style="font-size:13.5px; margin:0; display:none;"></p>
         </form>
       </div>
     </div>
@@ -1360,12 +1362,13 @@ body.edit-mode .insert-image-zone{display:block; text-align:center; margin:28px 
     </div>
     <div class="card" style="padding:32px;">
       <h3 class="card-title" style="font-size:19px; margin-bottom:16px;">Bizimle iletişime geçin</h3>
-      <form class="contact-form">
-        <div><label for="ad">Ad soyad</label><input type="text" id="ad" name="ad" placeholder="Ad soyad"></div>
-        <div><label for="eposta">E-posta adresi</label><input type="email" id="eposta" name="eposta" placeholder="ornek@eposta.com"></div>
+      <form class="contact-form" id="iletisim-form">
+        <div><label for="ad">Ad soyad</label><input type="text" id="ad" name="ad" placeholder="Ad soyad" required></div>
+        <div><label for="eposta">E-posta adresi</label><input type="email" id="eposta" name="eposta" placeholder="ornek@eposta.com" required></div>
         <div><label for="konu">Konu</label><input type="text" id="konu" name="konu" placeholder="Konu"></div>
-        <div><label for="mesaj">Mesajınız</label><textarea id="mesaj" name="mesaj" placeholder="Mesajınızı buraya yazın"></textarea></div>
+        <div><label for="mesaj">Mesajınız</label><textarea id="mesaj" name="mesaj" placeholder="Mesajınızı buraya yazın" required></textarea></div>
         <button type="submit" class="btn btn-brass" style="align-self:flex-start;">Gönder</button>
+        <p id="iletisim-form-msg" style="font-size:13.5px; margin:0; display:none;"></p>
       </form>
     </div>
   </div>
@@ -1704,6 +1707,92 @@ body.edit-mode .insert-image-zone{display:block; text-align:center; margin:28px 
       var res = await tbtkSupabase.from('tbtk_site_content').upsert({key:key, value:value, updated_at:new Date().toISOString()});
       return !res.error;
     } catch(e) { return false; }
+  }
+
+  /* ---------- Üyelik / Bağış / İletişim formları: gerçekten Supabase'e yazar ---------- */
+  function formMsg(el, text, ok){
+    if(!el) return;
+    el.textContent = text;
+    el.style.color = ok ? 'var(--vermillion)' : 'var(--coral)';
+    el.style.display = 'block';
+  }
+  function randCode(len){
+    var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    var out = '';
+    for(var i=0;i<len;i++){ out += chars[Math.floor(Math.random()*chars.length)]; }
+    return out;
+  }
+
+  var uyelikForm = document.getElementById('uyelik-form');
+  if(uyelikForm){
+    uyelikForm.addEventListener('submit', async function(e){
+      e.preventDefault();
+      var msgEl = document.getElementById('uyelik-form-msg');
+      var btn = uyelikForm.querySelector('button[type="submit"]');
+      var payload = {
+        full_name: document.getElementById('uad').value.trim(),
+        email: document.getElementById('ueposta').value.trim(),
+        phone: null,
+        message: [
+          document.getElementById('uunvan').value.trim() ? ('Unvan: ' + document.getElementById('uunvan').value.trim()) : '',
+          document.getElementById('ukurum').value.trim() ? ('Kurum: ' + document.getElementById('ukurum').value.trim()) : '',
+          document.getElementById('ualan').value.trim() ? ('Çalışma alanı: ' + document.getElementById('ualan').value.trim()) : '',
+          document.getElementById('umotivasyon').value.trim()
+        ].filter(Boolean).join('\\n')
+      };
+      if(!payload.full_name || !payload.email){ formMsg(msgEl, 'Ad soyad ve e-posta zorunludur.', false); return; }
+      btn.disabled = true;
+      var res = await tbtkSupabase.from('tbtk_membership_applications').insert(payload);
+      btn.disabled = false;
+      if(res.error){ formMsg(msgEl, 'Başvuru gönderilemedi, lütfen tekrar deneyin.', false); return; }
+      formMsg(msgEl, 'Başvurunuz alındı, Yönetim Kurulu değerlendirdikten sonra size dönüş yapılacaktır.', true);
+      uyelikForm.reset();
+    });
+  }
+
+  var bagisForm = document.getElementById('bagis-form');
+  if(bagisForm){
+    bagisForm.addEventListener('submit', async function(e){
+      e.preventDefault();
+      var msgEl = document.getElementById('bagis-form-msg');
+      var btn = bagisForm.querySelector('button[type="submit"]');
+      var fullName = document.getElementById('bad').value.trim();
+      var email = document.getElementById('beposta').value.trim();
+      var tutar = document.getElementById('btutar').value.trim();
+      if(!fullName || !email){ formMsg(msgEl, 'Ad soyad ve e-posta zorunludur.', false); return; }
+      var refNo = 'BGS-' + randCode(6);
+      var accessCode = randCode(6);
+      btn.disabled = true;
+      var res = await tbtkSupabase.from('tbtk_donations').insert({
+        reference_no: refNo, access_code: accessCode, full_name: fullName, email: email, message: tutar
+      });
+      btn.disabled = false;
+      if(res.error){ formMsg(msgEl, 'Bildirim gönderilemedi, lütfen tekrar deneyin.', false); return; }
+      formMsg(msgEl, 'Teşekkürler! Referans numaranız: ' + refNo + ' — sorgu kodunuz: ' + accessCode + ' (bu ikisini not edin).', true);
+      bagisForm.reset();
+    });
+  }
+
+  var iletisimForm = document.getElementById('iletisim-form');
+  if(iletisimForm){
+    iletisimForm.addEventListener('submit', async function(e){
+      e.preventDefault();
+      var msgEl = document.getElementById('iletisim-form-msg');
+      var btn = iletisimForm.querySelector('button[type="submit"]');
+      var payload = {
+        full_name: document.getElementById('ad').value.trim(),
+        email: document.getElementById('eposta').value.trim(),
+        subject: document.getElementById('konu').value.trim(),
+        message: document.getElementById('mesaj').value.trim()
+      };
+      if(!payload.full_name || !payload.email || !payload.message){ formMsg(msgEl, 'Ad soyad, e-posta ve mesaj zorunludur.', false); return; }
+      btn.disabled = true;
+      var res = await tbtkSupabase.from('tbtk_contact_messages').insert(payload);
+      btn.disabled = false;
+      if(res.error){ formMsg(msgEl, 'Mesaj gönderilemedi, lütfen tekrar deneyin.', false); return; }
+      formMsg(msgEl, 'Mesajınız alındı, en kısa sürede dönüş yapılacaktır.', true);
+      iletisimForm.reset();
+    });
   }
 
   /* ---------- Duyuru / Haber / Etkinlik verisi ---------- */
