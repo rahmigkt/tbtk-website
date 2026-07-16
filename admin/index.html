@@ -296,6 +296,12 @@ body.edit-mode .insert-image-zone{display:block; text-align:center; margin:28px 
 </style>
 </head>
 <body>
+<div id="edit-float-bar" style="display:none; position:fixed; left:50%; transform:translateX(-50%); bottom:22px; z-index:999; background:var(--ink); color:#fff; padding:10px 14px; border-radius:6px; box-shadow:0 10px 30px -10px rgba(0,0,0,0.45); gap:10px; align-items:center; font-family:var(--font-display);">
+  <span style="font-size:13px; font-family:var(--font-label); font-variant:small-caps; letter-spacing:0.4px; margin-right:4px;">Düzenleme modu açık</span>
+  <button type="button" id="float-save-btn" class="btn btn-brass" style="padding:7px 14px; font-size:13.5px;">Değişiklikleri Kaydet</button>
+  <button type="button" id="float-back-btn" class="btn btn-outline" style="padding:7px 14px; font-size:13.5px; border-color:#fff; color:#fff;">&larr; Panele Dön</button>
+  <button type="button" id="float-exit-btn" class="btn btn-outline" style="padding:7px 14px; font-size:13.5px; border-color:#fff; color:#fff;">Düzenlemeyi Kapat</button>
+</div>
 <a class="skip-link" href="#icerik">İçeriğe geç</a>
 <header>
   <div class="wrap nav-row">
@@ -1683,6 +1689,7 @@ body.edit-mode .insert-image-zone{display:block; text-align:center; margin:28px 
   renderMobileTabs();
   show('yonetim-paneli.html');
   initReveal();
+  window.tbtkShow = show;
 })();
 </script>
 
@@ -2252,28 +2259,57 @@ body.edit-mode .insert-image-zone{display:block; text-align:center; margin:28px 
   });
 
   var editToggle = document.getElementById('edit-mode-toggle');
+  var floatBar = document.getElementById('edit-float-bar');
+  function setEditMode(on){
+    document.body.classList.toggle('edit-mode', on);
+    ensureImageZones();
+    ensureImageReplaceButtons();
+    enableEditables(on);
+    if(editToggle) editToggle.textContent = on ? 'Düzenleme Modunu Kapat' : 'Düzenleme Modunu Aç';
+    if(floatBar) floatBar.style.display = on ? 'flex' : 'none';
+  }
   if(editToggle){
     editToggle.addEventListener('click', function(){
-      var on = !document.body.classList.contains('edit-mode');
-      document.body.classList.toggle('edit-mode', on);
-      ensureImageZones();
-      ensureImageReplaceButtons();
-      enableEditables(on);
-      editToggle.textContent = on ? 'Düzenleme Modunu Kapat' : 'Düzenleme Modunu Aç';
+      setEditMode(!document.body.classList.contains('edit-mode'));
     });
+  }
+
+  async function saveAllContent(){
+    var blocks = document.querySelectorAll('.page-block');
+    for(var i=0; i<blocks.length; i++){
+      var b = blocks[i];
+      await storeSet('tbtk_content_' + b.getAttribute('data-page'), b.innerHTML);
+    }
   }
 
   var saveBtn = document.getElementById('save-snapshot-btn');
   if(saveBtn){
     saveBtn.addEventListener('click', async function(){
-      var blocks = document.querySelectorAll('.page-block');
-      for(var i=0; i<blocks.length; i++){
-        var b = blocks[i];
-        await storeSet('tbtk_content_' + b.getAttribute('data-page'), b.innerHTML);
-      }
+      saveBtn.disabled = true;
+      await saveAllContent();
+      saveBtn.disabled = false;
       saveBtn.textContent = 'Kaydedildi ✓';
       setTimeout(function(){ saveBtn.textContent = 'Değişiklikleri Kaydet'; }, 2000);
     });
+  }
+
+  var floatSaveBtn = document.getElementById('float-save-btn');
+  if(floatSaveBtn){
+    floatSaveBtn.addEventListener('click', async function(){
+      floatSaveBtn.disabled = true;
+      await saveAllContent();
+      floatSaveBtn.disabled = false;
+      floatSaveBtn.textContent = 'Kaydedildi ✓';
+      setTimeout(function(){ floatSaveBtn.textContent = 'Değişiklikleri Kaydet'; }, 2000);
+    });
+  }
+  var floatBackBtn = document.getElementById('float-back-btn');
+  if(floatBackBtn){
+    floatBackBtn.addEventListener('click', function(){ if(window.tbtkShow) window.tbtkShow('yonetim-paneli.html'); });
+  }
+  var floatExitBtn = document.getElementById('float-exit-btn');
+  if(floatExitBtn){
+    floatExitBtn.addEventListener('click', function(){ setEditMode(false); });
   }
 
   /* ---------- Sayfa yüklenirken kayıtlı düzenlemeleri geri getir ---------- */
