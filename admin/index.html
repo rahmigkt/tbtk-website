@@ -1695,28 +1695,25 @@ body.edit-mode .insert-image-zone{display:block; text-align:center; margin:28px 
 })();
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+  var tbtkSupabase = supabase.createClient("https://xcsvobtewvjlnjeyqiux.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhjc3ZvYnRld3ZqbG5qZXlxaXV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyMzc5MzEsImV4cCI6MjA5ODgxMzkzMX0.0N7alvcBbwhU3jCbYpOEdlTPdPVyLP3HIlAbHsDtw-g");
+</script>
 <script>
 (function(){
-  /* ---------- Depolama katmanı: window.storage varsa onu kullan, yoksa bellek içi yedek ---------- */
-  var memoryStore = {};
-  var hasRealStorage = !!(window.storage && window.storage.get && window.storage.set);
-
+  /* ---------- Depolama katmanı: Supabase (tbtk_site_content) ---------- */
   async function storeGet(key){
-    if(hasRealStorage){
-      try {
-        var r = await window.storage.get(key, true);
-        return r ? r.value : null;
-      } catch(e) { return null; }
-    }
-    return memoryStore.hasOwnProperty(key) ? memoryStore[key] : null;
+    try {
+      var res = await tbtkSupabase.from('tbtk_site_content').select('value').eq('key', key).maybeSingle();
+      if(res.error || !res.data) return null;
+      return res.data.value;
+    } catch(e) { return null; }
   }
   async function storeSet(key, value){
-    if(hasRealStorage){
-      try { await window.storage.set(key, value, true); return true; }
-      catch(e) { return false; }
-    }
-    memoryStore[key] = value;
-    return true;
+    try {
+      var res = await tbtkSupabase.from('tbtk_site_content').upsert({key:key, value:value, updated_at:new Date().toISOString()});
+      return !res.error;
+    } catch(e) { return false; }
   }
 
   /* ---------- Duyuru / Haber / Etkinlik verisi ---------- */
@@ -1906,9 +1903,12 @@ body.edit-mode .insert-image-zone{display:block; text-align:center; margin:28px 
   /* ---------- Yönetici girişi ---------- */
   var loginBtn = document.getElementById('admin-login-btn');
   if(loginBtn){
-    loginBtn.addEventListener('click', function(){
+    loginBtn.addEventListener('click', async function(){
       var val = document.getElementById('admin-pass').value;
-      if(val === 'tbtk2026'){
+      loginBtn.disabled = true;
+      var res = await tbtkSupabase.auth.signInWithPassword({ email: 'bvhyapim@gmail.com', password: val });
+      loginBtn.disabled = false;
+      if(!res.error){
         document.getElementById('admin-gate').style.display = 'none';
         document.getElementById('admin-panel').style.display = 'block';
         refreshAll();
@@ -1918,6 +1918,18 @@ body.edit-mode .insert-image-zone{display:block; text-align:center; margin:28px 
       }
     });
   }
+
+  /* Sayfa yenilendiginde oturum hala aciksa dogrudan panele gec */
+  tbtkSupabase.auth.getSession().then(function(r){
+    if(r && r.data && r.data.session){
+      var gateEl = document.getElementById('admin-gate');
+      var panelEl = document.getElementById('admin-panel');
+      if(gateEl) gateEl.style.display = 'none';
+      if(panelEl) panelEl.style.display = 'block';
+      refreshAll();
+      refreshIntAdmin();
+    }
+  });
 
   /* ---------- İnterantika: ekspertiz başvuru sistemi ---------- */
   var INT_KEY = 'tbtk_interantika_v1';
