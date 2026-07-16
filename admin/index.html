@@ -1636,15 +1636,6 @@ body.edit-mode .insert-image-zone{display:block; text-align:center; margin:28px 
     });
   });
 
-  // admin.html: bu dosya sadece yonetim paneline dogrudan gitmek icin var, sayfa yuklenir yuklenmez paneli goster
-  (function(){
-    var idxBlock = block('index.html');
-    var adminBlock = block('yonetim-paneli.html');
-    if(idxBlock) idxBlock.hidden = true;
-    if(adminBlock) adminBlock.hidden = false;
-    current = 'yonetim-paneli.html';
-  })();
-
   /* Mobilde parmakla yatay kaydırarak sekmeler arası geçiş */
   var touchStartX = null, touchStartY = null;
   document.addEventListener('touchstart', function(e){
@@ -1690,7 +1681,7 @@ body.edit-mode .insert-image-zone{display:block; text-align:center; margin:28px 
   }
 
   renderMobileTabs();
-  show('index.html');
+  show('yonetim-paneli.html');
   initReveal();
 })();
 </script>
