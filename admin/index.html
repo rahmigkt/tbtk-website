@@ -2278,6 +2278,7 @@ body.edit-mode .insert-image-zone{display:block; text-align:center; margin:28px 
     var blocks = document.querySelectorAll('.page-block');
     for(var i=0; i<blocks.length; i++){
       var b = blocks[i];
+      if(b.getAttribute('data-page') === 'yonetim-paneli.html') continue;
       var clone = b.cloneNode(true);
       var editableEls = clone.querySelectorAll('[contenteditable]');
       for(var j=0; j<editableEls.length; j++){ editableEls[j].setAttribute('contenteditable', 'false'); }
@@ -2320,6 +2321,7 @@ body.edit-mode .insert-image-zone{display:block; text-align:center; margin:28px 
     var blocks = document.querySelectorAll('.page-block');
     for(var i=0; i<blocks.length; i++){
       var b = blocks[i];
+      if(b.getAttribute('data-page') === 'yonetim-paneli.html') continue;
       var saved = await storeGet('tbtk_content_' + b.getAttribute('data-page'));
       if(saved){ b.innerHTML = saved; }
     }
