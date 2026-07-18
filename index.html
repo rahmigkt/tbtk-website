@@ -2370,7 +2370,10 @@ body.edit-mode .insert-image-zone{display:block; text-align:center; margin:28px 
       var blocks = document.querySelectorAll('.page-block');
       for(var i=0; i<blocks.length; i++){
         var b = blocks[i];
-        await storeSet('tbtk_content_' + b.getAttribute('data-page'), b.innerHTML);
+        var clone = b.cloneNode(true);
+        var editableEls = clone.querySelectorAll('[contenteditable]');
+        for(var j=0; j<editableEls.length; j++){ editableEls[j].setAttribute('contenteditable', 'false'); }
+        await storeSet('tbtk_content_' + b.getAttribute('data-page'), clone.innerHTML);
       }
       saveBtn.textContent = 'Kaydedildi ✓';
       setTimeout(function(){ saveBtn.textContent = 'Değişiklikleri Kaydet'; }, 2000);
